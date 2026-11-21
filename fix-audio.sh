@@ -2,6 +2,14 @@
 set -Eeuo pipefail
 
 CARD="${CARD:-0}"
+# The tested baseline was 151 (-20 dB). 163 adds 6 dB while staying
+# below the codec's reported maximum of 191 (0 dB).
+DAC_VOLUME="${DAC_VOLUME:-163}"
+
+if [[ ! "$DAC_VOLUME" =~ ^[0-9]+$ ]] || (( DAC_VOLUME < 0 || DAC_VOLUME > 191 )); then
+  echo "Erro: DAC_VOLUME deve ser um inteiro entre 0 e 191." >&2
+  exit 1
+fi
 
 if ! command -v amixer >/dev/null 2>&1; then
   echo "Erro: amixer não encontrado. Ele faz parte do pacote alsa-utils." >&2
@@ -48,7 +56,7 @@ done
 echo "Aplicando workaround ES8336 na placa ALSA $CARD..."
 set_control "Speaker Switch" on
 set_control "Headphone Switch" on
-set_control "DAC Playback Volume" 151
+set_control "DAC Playback Volume" "$DAC_VOLUME"
 set_control "PGA1.0 1 Master Playback Volume" 32
 set_control "PGA5.0 5 Master Playback Volume" 32
 set_control "PGA6.0 6 Master Playback Volume" 32
@@ -56,4 +64,5 @@ set_control "PGA7.0 7 Master Playback Volume" 32
 
 echo
 echo "Concluído. Teste o áudio com volume baixo."
+echo "DAC Playback Volume aplicado: $DAC_VOLUME (máximo reportado: 191)."
 echo "As alterações são temporárias e podem ser perdidas após reiniciar."
