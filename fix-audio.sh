@@ -2,9 +2,9 @@
 set -Eeuo pipefail
 
 CARD="${CARD:-0}"
-# The tested baseline was 151 (-20 dB). 163 adds 6 dB while staying
-# below the codec's reported maximum of 191 (0 dB).
-DAC_VOLUME="${DAC_VOLUME:-163}"
+# The original tested DAC value was 151. The codec reports a range of 0–191.
+# Default to 184, seven steps below the reported maximum.
+DAC_VOLUME="${DAC_VOLUME:-184}"
 
 if [[ ! "$DAC_VOLUME" =~ ^[0-9]+$ ]] || (( DAC_VOLUME < 0 || DAC_VOLUME > 191 )); then
   echo "Erro: DAC_VOLUME deve ser um inteiro entre 0 e 191." >&2
