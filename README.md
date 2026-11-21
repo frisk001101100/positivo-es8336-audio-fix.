@@ -1,62 +1,112 @@
-# Positivo ES8336 Audio Fix
+# Positivo Motion C4128G-15 — ES8336 Audio Fix
 
-A small, manual ALSA mixer workaround for the ES8336 audio codec found in the Positivo Motion C4128G-15.
+A lightweight ALSA mixer workaround for restoring speaker and headphone output on the **Positivo Motion C4128G-15** laptop with the Everest Semiconductor ES8336 audio codec.
 
-> **Status:** tested successfully in a Zorin OS Live session on one Positivo Motion C4128G-15. The same laptop also had working audio in Linux Mint Live after applying equivalent mixer settings. This is a device-specific workaround, not a universal ES8336 driver or a confirmed permanent fix.
+> [!IMPORTANT]
+> This is a device-specific mixer workaround, not a replacement audio driver or a permanent UCM fix. It was tested on one Positivo Motion C4128G-15. Other hardware revisions and distributions may expose different mixer controls.
 
-## The symptom
+## Overview
 
-On this laptop, the installed `sof-essx8336` UCM profile attempts to use mixer controls that are not exposed by the hardware, including `DAC Mono Mix Switch`, `Headphone Mixer`, `Differential Mux`, and `Digital Mic Mux`. WirePlumber logs reported that no UCM HiFi verb was valid, and audio did not work with the generic fallback profile.
+On the tested laptop, the installed `sof-essx8336` UCM profile attempted to use mixer controls that were not exposed by the hardware. WirePlumber reported that no valid UCM HiFi verb was available, and the generic fallback did not restore audio.
 
-The workaround applies these mixer settings:
+This script applies the mixer settings that restored audio during testing:
 
-- Speaker Switch: on
-- Headphone Switch: on
-- DAC Playback Volume: 184 by default (seven steps below the reported maximum of 191)
-- PGA master playback controls: 32 (their reported maximum)
+| ALSA mixer control | Applied value |
+| --- | ---: |
+| `Speaker Switch` | `on` |
+| `Headphone Switch` | `on` |
+| `DAC Playback Volume` | `191` (default) |
+| `PGA1.0 1 Master Playback Volume` | `32` |
+| `PGA5.0 5 Master Playback Volume` | `32` |
+| `PGA6.0 6 Master Playback Volume` | `32` |
+| `PGA7.0 7 Master Playback Volume` | `32` |
 
-The ES8336 reports a DAC Playback Volume range of 0–191. The default 184 is an experimental higher setting, not a verified safe or distortion-free level for every speaker. Start with a low system volume and stop increasing playback if you hear distortion or other unusual speaker behavior.
+The DAC control reports a range of `0–191`. The default is set to `191`, the requested upper limit. **A control's maximum is not a guarantee of clean output or safe acoustic volume.** Begin with a low system volume, increase carefully, and reduce the level if you hear distortion. Avoid testing at high volume through headphones.
 
-## Usage
+## Requirements
 
-1. Download `fix-audio.sh`.
-2. Open a terminal in the downloaded folder.
-3. Run:
+- Positivo Motion C4128G-15 with the ES8336 codec and the expected ALSA controls
+- Linux with ALSA utilities
+- `bash`, `amixer`, and `grep`
+
+On Debian/Ubuntu-based distributions (including Zorin OS):
 
 ```bash
+sudo apt update
+sudo apt install alsa-utils
+```
+
+## Quick start
+
+Download and run the script:
+
+```bash
+curl -fL "https://raw.githubusercontent.com/frisk001101100/positivo-es8336-audio-fix./main/fix-audio.sh" -o fix-audio.sh
 chmod +x fix-audio.sh
 ./fix-audio.sh
 ```
 
-To choose a different DAC value, set `DAC_VOLUME` (valid range: 0–191):
+The script checks that all required controls exist before changing any mixer value. It stops with an error if the expected hardware controls are missing.
+
+## Configuration
+
+The default DAC value is `191`. You can override it for a single run with `DAC_VOLUME`:
 
 ```bash
 DAC_VOLUME=184 ./fix-audio.sh
 ```
 
-The script only changes ALSA mixer values for the current session. It does not install packages, modify UCM files, change the kernel, or configure automatic startup. Mixer settings may reset after reboot.
+Valid values are integers from `0` to `191`.
 
-If your audio card is not card 0, specify its ALSA card index:
+If the audio device is not ALSA card `0`, select another card index with `CARD`:
 
 ```bash
 CARD=1 ./fix-audio.sh
 ```
 
-## Safety and compatibility
+Both options can be combined:
 
-- Start with a low system volume before testing.
-- The value 184 is seven steps below the codec control's reported maximum, but that margin does not guarantee that the laptop speakers can handle the resulting output without distortion.
-- The script checks that each named control exists and validates the DAC value before changing mixer values.
-- It is intended for the tested Positivo Motion C4128G-15 / ES8336 setup. Other Positivo Motion variants may expose different controls.
-- No guarantee is made for other distributions, kernel versions, or hardware revisions.
-- If any control is missing, the script stops and reports it rather than guessing.
+```bash
+CARD=1 DAC_VOLUME=184 ./fix-audio.sh
+```
 
-## Technical notes
+## Troubleshooting
 
-The original working values were first discovered and validated manually with ALSA `amixer` on Linux Mint Live and Zorin OS Live. The Zorin test used the ES8336 / `sof-essx8336` card. The higher default DAC setting is based on the codec's reported mixer range; it is an adjustment to test, not a claim that the speaker hardware can safely or cleanly reproduce that output.
+### The script says that an ALSA card cannot be accessed
 
-This repository documents the known working mixer workaround. It does not yet provide a permanent UCM profile correction.
+List the available cards:
+
+```bash
+cat /proc/asound/cards
+```
+
+Then rerun the script with the correct index, for example `CARD=1 ./fix-audio.sh`.
+
+### A mixer control is missing
+
+Inspect the controls exposed by the codec:
+
+```bash
+amixer -c 0 controls
+```
+
+The script intentionally stops instead of guessing values for a different hardware layout.
+
+### Audio settings reset after reboot
+
+That is expected. This workaround changes runtime ALSA mixer values only. It does not install a service, configure automatic startup, modify UCM files, change the kernel, or make the settings persistent.
+
+## Validation notes
+
+- Audio was restored on a Positivo Motion C4128G-15 in a Zorin OS Live session.
+- Equivalent mixer settings also restored audio on the same laptop in Linux Mint Live.
+- The original working values were identified and checked manually with `amixer`.
+- The higher default DAC setting uses the control's reported upper limit; it is not a claim that every speaker or headphone can handle that output without distortion.
+
+## Scope
+
+This repository documents a practical workaround for the tested laptop. It does not currently provide a corrected UCM profile, a kernel patch, or a universal fix for every ES8336 device.
 
 ## License
 
-MIT
+MIT. See [LICENSE](LICENSE).
