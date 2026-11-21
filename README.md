@@ -8,12 +8,14 @@ A small, manual ALSA mixer workaround for the ES8336 audio codec found in the Po
 
 On this laptop, the installed `sof-essx8336` UCM profile attempts to use mixer controls that are not exposed by the hardware, including `DAC Mono Mix Switch`, `Headphone Mixer`, `Differential Mux`, and `Digital Mic Mux`. WirePlumber logs reported that no UCM HiFi verb was valid, and audio did not work with the generic fallback profile.
 
-The following mixer settings restored speaker audio during the Live session:
+The workaround applies these mixer settings:
 
 - Speaker Switch: on
 - Headphone Switch: on
-- DAC Playback Volume: 151
-- PGA master playback controls: 32
+- DAC Playback Volume: 163 by default (6 dB above the original tested value of 151)
+- PGA master playback controls: 32 (their reported maximum)
+
+The ES8336 reports a DAC Playback Volume range of 0–191. The default 163 is a moderate increase, not the maximum. Higher settings can cause clipping or unpleasant distortion, so start with a low system volume and increase carefully.
 
 ## Usage
 
@@ -24,6 +26,12 @@ The following mixer settings restored speaker audio during the Live session:
 ```bash
 chmod +x fix-audio.sh
 ./fix-audio.sh
+```
+
+To choose a different DAC value, set `DAC_VOLUME` (valid range: 0–191):
+
+```bash
+DAC_VOLUME=163 ./fix-audio.sh
 ```
 
 The script only changes ALSA mixer values for the current session. It does not install packages, modify UCM files, change the kernel, or configure automatic startup. Mixer settings may reset after reboot.
@@ -37,14 +45,15 @@ CARD=1 ./fix-audio.sh
 ## Safety and compatibility
 
 - Start with a low system volume before testing.
-- The script checks that each named control exists before changing it.
+- Avoid jumping straight to the DAC maximum; higher values may introduce clipping or distortion.
+- The script checks that each named control exists and validates the DAC value before changing mixer values.
 - It is intended for the tested Positivo Motion C4128G-15 / ES8336 setup. Other Positivo Motion variants may expose different controls.
 - No guarantee is made for other distributions, kernel versions, or hardware revisions.
 - If any control is missing, the script stops and reports it rather than guessing.
 
 ## Technical notes
 
-The working values were first discovered and validated manually with ALSA `amixer` on Linux Mint Live and Zorin OS Live. The Zorin test used the ES8336 / `sof-essx8336` card.
+The original working values were first discovered and validated manually with ALSA `amixer` on Linux Mint Live and Zorin OS Live. The Zorin test used the ES8336 / `sof-essx8336` card. The higher default DAC setting is based on the codec's reported mixer range; it is an adjustment to test, not a claim that the speaker hardware can safely or cleanly reproduce the maximum output.
 
 This repository documents the known working mixer workaround. It does not yet provide a permanent UCM profile correction.
 
