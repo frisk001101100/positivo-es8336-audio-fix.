@@ -183,6 +183,10 @@ If the service failed, inspect its boot log with `journalctl` as shown above.
 - The original working values were identified and checked manually with `amixer`.
 - Persistent mode uses systemd to reapply the same tested mixer profile; it does not modify the kernel, GRUB, or UCM configuration.
 
+- Audio was also restored in an installed Zorin OS session on the same C4128G-15, with the persistent systemd service enabled and reporting a successful boot-time application.
+- Playback was verified through ALSA `speaker-test` using the default output; audible test tone and normal music playback (Weezer) were confirmed.
+- A further power-cycle test is still pending; persistence is configured and the service ran successfully at boot, but survival across a subsequent reboot has not yet been independently confirmed.
+
 ## Scope
 
 This repository documents a practical workaround for the tested laptop. It does not provide a corrected UCM profile, a kernel patch, or a universal fix for every ES8336 device.
