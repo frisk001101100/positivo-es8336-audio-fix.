@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import re
 import subprocess
 import sys
@@ -89,7 +88,14 @@ def read_control(card: int, name: str) -> str:
     match = re.search(r"^\s*: values=(.+)$", output, flags=re.MULTILINE)
     if not match:
         raise ProfileError(f"Não consegui ler o valor do controle: {name}")
-    return match.group(1).strip()
+    value = match.group(1).strip().split(",", 1)[0].strip()
+    kind, _bounds = CONTROL_LIMITS[name]
+    if kind == "integer":
+        try:
+            return int(value)
+        except ValueError as exc:
+            raise ProfileError(f"Valor numérico inesperado para {name}: {value!r}") from exc
+    return value.lower()
 
 
 def validate_profile(data: Any) -> dict[str, Any]:
