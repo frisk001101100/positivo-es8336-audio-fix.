@@ -139,6 +139,33 @@ Show persistent service status:
 ./fix-audio.sh --status
 ```
 
+## JSON mixer profiles
+
+The repository also includes `audio-profile.py`, a small profile manager. It stores the tested ALSA mixer values in JSON and can save the current mixer state as another profile.
+
+```bash
+# Identify the ES8336 card (no fixed card index required)
+python3 audio-profile.py list-cards
+
+# Apply the included JSON profile
+python3 audio-profile.py apply
+
+# Save the current mixer state as a reusable profile
+python3 audio-profile.py save-current meu-perfil.json
+
+# Apply a saved profile
+python3 audio-profile.py apply meu-perfil.json
+
+# Restore the original mixer state captured before the first profile application
+python3 audio-profile.py restore
+```
+
+The profile manager validates the known control names and value ranges, detects the compatible ALSA card automatically, and stores the original mixer values at `~/.local/state/positivo-es8336-audio-fix/original-mixer.json` before the first application. It preserves that original backup on later runs.
+
+These JSON files are profiles owned by this project; they are **not** native ALSA configuration files or Cinnamon sound-applet presets. The existing `fix-audio.sh --install` systemd service continues to use the original shell-based application path. The JSON profile manager is currently an additional manual workflow.
+
+See [PROFILE-MANAGER.md](PROFILE-MANAGER.md) for details.
+
 ## Troubleshooting
 
 ### The service fails because an ALSA card cannot be accessed
