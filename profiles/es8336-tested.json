@@ -1,0 +1,15 @@
+{
+  "format": "positivo-es8336-audio-profile",
+  "schema_version": 1,
+  "device": "ES8336",
+  "description": "Perfil testado no Positivo Motion C4128G-15; DAC 191 e PGA 32.",
+  "controls": {
+    "Speaker Switch": "on",
+    "Headphone Switch": "on",
+    "DAC Playback Volume": 191,
+    "PGA1.0 1 Master Playback Volume": 32,
+    "PGA5.0 5 Master Playback Volume": 32,
+    "PGA6.0 6 Master Playback Volume": 32,
+    "PGA7.0 7 Master Playback Volume": 32
+  }
+}
